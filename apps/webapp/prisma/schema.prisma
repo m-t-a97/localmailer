@@ -1,0 +1,23 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ComposedEmail {
+  id        String   @id @default(cuid())
+  from      String
+  to        String[]
+  subject   String
+  html      String
+  text      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("composed_emails")
+}
