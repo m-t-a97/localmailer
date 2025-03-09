@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { Menu } from "lucide-react";
@@ -12,7 +13,8 @@ export default function Navbar() {
           </label>
 
           <Link href="/" className="flex items-center space-x-2">
-            <span className="font-bold sm:inline-block">LocalMailer</span>
+            <Image src="/app-icon.png" height={40} width={40} alt="App Logo" />
+            <span className="text-base font-semibold">LocalMailer</span>
           </Link>
 
           {/* TODO: need to fix the theme on as some components still display white even in dark mode */}
