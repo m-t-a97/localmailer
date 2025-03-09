@@ -1,7 +1,7 @@
 # ---------------------------------
 # BASE STAGE
 # ---------------------------------
-FROM node:22-alpine as base
+FROM node:22-alpine AS base
 
 RUN apk update && apk add --no-cache libc6-compat
 
@@ -36,10 +36,16 @@ WORKDIR /app
 COPY .gitignore .gitignore
 COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/pnpm-lock.yaml ./
-
 RUN pnpm i --frozen-lockfile
 
 COPY --from=pruner /app/out/full/ .
+
+# Navigate to the webapp project
+WORKDIR /app/apps/webapp
+# Run the prisma generate command from there to generate the prisma client
+RUN pnpm prisma:generate
+# Then navigate back to the root of the project to continue with the rest of the build
+WORKDIR /app
 
 RUN pnpm dlx turbo run build --filter=webapp...
 # ---------------------------------
