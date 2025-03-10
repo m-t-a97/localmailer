@@ -1,17 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { z } from "zod";
+import { validateNewComposedEmail } from "@repo/data-commons";
 
 import { getAllEmails, getEmailById } from "@/services/server/email.service";
 import { constructAndSaveEmail } from "@/services/server/email.service";
-
-const emailSchema = z.object({
-  from: z.string().email(),
-  to: z.string().email().array(),
-  subject: z.string(),
-  html: z.string().min(1),
-  text: z.string().min(1),
-});
 
 // GET handler to retrieve all emails
 export async function GET(request: NextRequest) {
@@ -45,19 +37,19 @@ export async function GET(request: NextRequest) {
 // POST handler to send a new email
 export async function POST(request: NextRequest) {
   try {
-    const bodyData = await request.json();
+    const body = await request.json();
 
-    const validationResult = emailSchema.safeParse(bodyData);
+    const validationResult = validateNewComposedEmail(body);
 
     if (!validationResult.success) {
       return NextResponse.json(
-        { error: validationResult.error.format() },
+        { error: validationResult.error },
         { status: 422 },
       );
     }
 
     const { success, emailId } = await constructAndSaveEmail(
-      validationResult.data,
+      validationResult.value,
     );
 
     if (!success) {

@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { z } from "zod";
 
-import { smtpServerActionSchema } from "@repo/data-commons";
+import {
+  getValidationResult,
+  smtpServerActionSchema,
+} from "@repo/data-commons";
 
 import {
   startSMTPServer,
@@ -25,22 +28,23 @@ export async function GET() {
 const postSchema = z.object({
   action: smtpServerActionSchema,
 });
+type PostSchema = z.infer<typeof postSchema>;
 
 // POST handler to start/stop the SMTP server
 export async function POST(request: NextRequest) {
   try {
-    const bodyData = await request.json();
+    const body = await request.json();
 
-    const validationResult = postSchema.safeParse(bodyData);
+    const validationResult = getValidationResult<PostSchema>(body, postSchema);
 
     if (!validationResult.success) {
       return NextResponse.json(
-        { error: validationResult.error.format() },
+        { error: validationResult.error },
         { status: 422 },
       );
     }
 
-    const { action } = validationResult.data;
+    const { action } = validationResult.value;
 
     switch (action) {
       case "start": {

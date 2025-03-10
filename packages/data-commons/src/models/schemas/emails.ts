@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { getValidationResult } from "./generics";
 
 const composedEmailSchema = z.object({
@@ -12,11 +13,14 @@ const composedEmailSchema = z.object({
 });
 export type ComposedEmail = z.infer<typeof composedEmailSchema>;
 
-const newComposedEmailSchema = composedEmailSchema.omit({
+export const validateComposedEmail = (data: unknown) =>
+  getValidationResult<ComposedEmail>(data, composedEmailSchema);
+
+export const newComposedEmailSchema = composedEmailSchema.omit({
   id: true,
   createdAt: true,
 });
 export type NewComposedEmail = z.infer<typeof newComposedEmailSchema>;
 
-export const validateComposedEmail = (data: unknown) =>
-  getValidationResult<ComposedEmail>(data, composedEmailSchema);
+export const validateNewComposedEmail = (data: unknown) =>
+  getValidationResult<NewComposedEmail>(data, newComposedEmailSchema);
