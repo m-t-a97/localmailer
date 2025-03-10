@@ -4,6 +4,10 @@
   The open-source email client for local development.  
 </p>
 
+<p align="center">
+  <img src="./app-icon.png" height="100" width="150" alt="App Logo"/>
+</p>
+
 ---
 
 ### Table of Contents
