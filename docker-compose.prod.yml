@@ -6,8 +6,6 @@ services:
     build:
       context: .
       dockerfile: ./apps/webapp/Dockerfile
-      args:
-        NEXT_PUBLIC_SMTP_HOST: ${NEXT_PUBLIC_SMTP_HOST}
     ports:
       - "${WEBAPP_PORT:-3000}:3000"
     environment:
@@ -15,9 +13,21 @@ services:
     networks:
       - localmailer_network
     depends_on:
-      - postgres
+      - db
+      - migrate
 
-  postgres:
+  migrate:
+    build:
+      context: .
+      dockerfile: ./apps/webapp/Dockerfile.migration
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    networks:
+      - localmailer_network
+    depends_on:
+      - db
+
+  db:
     image: postgres:17
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d localmailer -U postgres"]
