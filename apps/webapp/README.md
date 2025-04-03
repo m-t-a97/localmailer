@@ -44,12 +44,12 @@ To build and run using Docker:
 ```bash
 $ docker build . \
   -t localmailer-webapp \
-  # provide all the ENV variables which are prefixed with "NEXT_PUBLIC" as these variables need to be injected during build time. Get them from the .env file.
+  # provide all the ENV variables which are prefixed with "NEXT_PUBLIC" as these variables need to be injected during build time. You can get them from the .env file.
   --build-arg KEY=VALUE
 
 $ docker run -itd \
   -p 3000:3000 \
-  # provide all the ENV variables which are not prefixed with "NEXT_PUBLIC" as these variables are dynamic and can be injected at runtime. Get them from the .env file.
+  # provide all the ENV variables which are not prefixed with "NEXT_PUBLIC" as these variables are dynamic and can be injected at runtime. You can get them from the .env file.
   -e KEY=VALUE \
   localmailer-webapp
 ```
