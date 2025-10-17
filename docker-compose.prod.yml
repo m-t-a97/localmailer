@@ -1,0 +1,44 @@
+networks:
+  localmailer_network:
+
+services:
+  db:
+    image: postgres:18
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d localmailer -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: localmailer
+    networks:
+      - localmailer_network
+
+  migrate:
+    build:
+      context: .
+      dockerfile: ./apps/webapp/Dockerfile.migration
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    networks:
+      - localmailer_network
+    depends_on:
+      - db
+  
+  webapp:
+    build:
+      context: .
+      dockerfile: ./apps/webapp/Dockerfile
+    ports:
+      - "${WEBAPP_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    networks:
+      - localmailer_network
+    depends_on:
+      - db
+      - migrate
