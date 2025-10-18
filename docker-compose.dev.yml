@@ -1,9 +1,3 @@
-volumes:
-  docker-volumes:
-
-networks:
-  localmailer_network:
-
 services:
   db:
     image: postgres:18
@@ -21,4 +15,10 @@ services:
     networks:
       - localmailer_network
     volumes:
-      - ./docker-volumes/db:/var/lib/postgresql/data
+      - localmailer-db:/var/lib/postgresql/data
+
+volumes:
+  localmailer-db:
+
+networks:
+  localmailer_network:
