@@ -1,6 +1,3 @@
-networks:
-  localmailer_network:
-
 services:
   db:
     image: postgres:18
@@ -28,7 +25,7 @@ services:
       - localmailer_network
     depends_on:
       - db
-  
+
   webapp:
     build:
       context: .
@@ -42,3 +39,6 @@ services:
     depends_on:
       - db
       - migrate
+
+networks:
+  localmailer_network:
