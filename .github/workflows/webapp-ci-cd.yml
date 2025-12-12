@@ -1,0 +1,45 @@
+name: WEBAPP CI/CD
+
+on:
+  push:
+    paths:
+      - "apps/webapp/**"
+    branches: [dev, main]
+  pull_request:
+    paths:
+      - "apps/webapp/**"
+    branches: [dev, main]
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack & Init Pnpm
+        run: |
+          npx corepack enable pnpm
+          npx corepack prepare pnpm@10.25.0 --activate
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: cd apps/webapp && pnpm prisma:generate
+
+      - name: Build
+        run: pnpm dlx turbo run webapp#build
+
+      - name: Lint
+        run: pnpm dlx turbo run webapp#lint
+
+      - name: Test
+        run: pnpm dlx turbo run webapp#test
