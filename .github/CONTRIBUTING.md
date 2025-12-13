@@ -64,9 +64,15 @@ Make sure to follow the README files in each of the sub projects to set it up. O
 Spin up a docker compose stack to run all the relevant services needed for development. NOTE: you will need to run this command in the project folder on the host side as docker commands will not work within a docker container. So navigate to this same project folder but within your local system and then run the following commands:
 
 ```bash
+# Development
 $ docker compose -f docker-compose.dev.yml down -v && \
   docker compose --env-file=./webapp.env -f docker-compose.dev.yml build --parallel && \
   docker compose --env-file=./webapp.env -f docker-compose.dev.yml up -d
+
+# Production
+$ docker compose -f docker-compose.prod.yml down -v && \
+  docker compose --env-file=./webapp.env -f docker-compose.prod.yml build --parallel && \
+  docker compose --env-file=./webapp.env --env-file=./db.env -f docker-compose.prod.yml up -d
 ```
 
 Please follow the [Contributing](./CONTRIBUTING.md) guide to set up your environment.

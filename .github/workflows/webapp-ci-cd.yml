@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Enable Corepack & Init Pnpm
         run: |
@@ -24,16 +24,19 @@ jobs:
           npx corepack prepare pnpm@10.25.0 --activate
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma Client
-        run: cd apps/webapp && pnpm prisma:generate
+        env:
+          # This is here just to satisfy Prisma's need for a DATABASE_URL during generation
+          DATABASE_URL: "postgresql://user:password@localhost:5432/localmailer?schema=public"
+        run: cd apps/webapp && pnpm prisma:generate:docker
 
       - name: Build
         run: pnpm dlx turbo run webapp#build
