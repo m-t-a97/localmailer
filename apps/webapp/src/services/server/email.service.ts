@@ -11,12 +11,17 @@ import {
   NewComposedEmail,
 } from "@repo/data-commons";
 
+import ENV_CONFIG from "@/config/env-config";
 import prisma from "@/lib/prisma-client";
 
 const localTransport = nodemailer.createTransport({
-  host: "localhost",
-  port: 2525,
-  secure: false,
+  host: ENV_CONFIG.smtp.host,
+  port: ENV_CONFIG.smtp.port,
+  secure: false, // Local dev usually doesn't use SSL/TLS
+  auth: {
+    user: ENV_CONFIG.smtp.user,
+    pass: ENV_CONFIG.smtp.pass,
+  },
   tls: {
     rejectUnauthorized: false,
   },

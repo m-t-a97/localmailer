@@ -26,12 +26,16 @@ export function startSMTPServer(port = 2525): void {
 
       stream.on("end", async () => {
         try {
-          console.log({ mailData });
-
           const parsed = await simpleParser(mailData);
 
+          let fromAddress = parsed.from?.text;
+          if (!fromAddress && session.envelope.mailFrom) {
+            if (typeof session.envelope.mailFrom === "object") {
+              fromAddress = session.envelope.mailFrom.address;
+            }
+          }
           const newEmail: NewComposedEmail = {
-            from: parsed.from?.text || "",
+            from: fromAddress || "unknown",
             to: !!parsed.to
               ? Array.isArray(parsed.to)
                 ? parsed.to.map((addr) => addr.text.trim())

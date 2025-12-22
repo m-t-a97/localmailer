@@ -6,7 +6,7 @@ FROM node:lts-alpine AS base
 RUN apk update && apk add --no-cache libc6-compat
 
 RUN corepack enable pnpm
-RUN corepack prepare --activate pnpm@10.25.0
+RUN corepack prepare --activate pnpm@10.26.1
 # ---------------------------------
 
 # ---------------------------------

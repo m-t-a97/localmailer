@@ -5,10 +5,7 @@
     "dockerfile": "Dockerfile"
   },
   "workspaceFolder": "/workspaces/localmailer",
-  "containerEnv": {
-    "DISPLAY": "host.docker.internal:0.0"
-  },
-  "forwardPorts": [3000, 3001],
+  "forwardPorts": [2525, 3000, 3001],
   "customizations": {
     "vscode": {
       "settings": {

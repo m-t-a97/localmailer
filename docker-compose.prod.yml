@@ -33,6 +33,7 @@ services:
     env_file: ./webapp.env
     ports:
       - "${WEBAPP_PORT}:3000"
+      - "2525:2525"
     networks:
       - localmailer_network
     depends_on:

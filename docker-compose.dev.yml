@@ -8,6 +8,7 @@ services:
       retries: 3
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
+      - "2525:2525"
     env_file: db.env
     networks:
       - localmailer_network

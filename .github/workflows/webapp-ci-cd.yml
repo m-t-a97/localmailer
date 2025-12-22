@@ -21,7 +21,7 @@ jobs:
       - name: Enable Corepack & Init Pnpm
         run: |
           npx corepack enable pnpm
-          npx corepack prepare pnpm@10.25.0 --activate
+          npx corepack prepare pnpm@10.26.1 --activate
 
       - name: Install Node.js
         uses: actions/setup-node@v6
