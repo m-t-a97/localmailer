@@ -6,17 +6,18 @@ import {
   getAllEmails,
   getEmailById,
   deleteEmailById,
+  createS3ServiceFromEnv,
 } from "@/services/server/email.service";
 import { constructAndSaveEmail } from "@/services/server/email.service";
 
-// GET handler to retrieve all emails
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
+    const includeAttachments = searchParams.get("includeAttachments") === "true";
 
     if (id) {
-      const email = await getEmailById(id);
+      const email = await getEmailById(id, includeAttachments);
 
       if (!email) {
         return NextResponse.json({ error: "Email not found" }, { status: 404 });
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(email);
     }
 
-    const emails = await getAllEmails();
+    const emails = await getAllEmails(includeAttachments);
 
     return NextResponse.json(emails);
   } catch (error) {
@@ -38,7 +39,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST handler to send a new email
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -74,7 +74,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// DELETE handler to delete an email by ID
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -87,7 +86,8 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await deleteEmailById(id);
+    const s3Service = createS3ServiceFromEnv();
+    await deleteEmailById(id, s3Service);
 
     return NextResponse.json(
       { message: "Email deleted successfully" },

@@ -11,6 +11,7 @@ import {
   startSMTPServer,
   stopSMTPServer,
 } from "@/services/server/smtp.service";
+import { createS3ServiceFromEnv } from "@/services/server/email.service";
 
 // GET handler to check server status
 export async function GET() {
@@ -49,7 +50,9 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case "start": {
         const port = 2525;
-        startSMTPServer(port);
+        const s3Service = createS3ServiceFromEnv();
+        await s3Service.ensureBucket();
+        startSMTPServer(port, s3Service);
 
         return NextResponse.json({
           success: true,

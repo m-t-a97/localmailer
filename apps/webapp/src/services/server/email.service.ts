@@ -9,15 +9,19 @@ import {
   validateComposedEmail,
   ComposedEmail,
   NewComposedEmail,
+  NewEmailAttachment,
 } from "@repo/data-commons";
 
 import ENV_CONFIG from "@/config/env-config";
 import prisma from "@/lib/prisma-client";
 
+import { S3Service } from "./s3.service";
+import { S3Dependencies, createS3Dependencies, createS3Service } from "./s3.service";
+
 const localTransport = nodemailer.createTransport({
   host: ENV_CONFIG.smtp.host,
   port: ENV_CONFIG.smtp.port,
-  secure: false, // Local dev usually doesn't use SSL/TLS
+  secure: false,
   auth: {
     user: ENV_CONFIG.smtp.user,
     pass: ENV_CONFIG.smtp.pass,
@@ -27,9 +31,12 @@ const localTransport = nodemailer.createTransport({
   },
 });
 
-export async function getAllEmails(): Promise<ComposedEmail[]> {
+export async function getAllEmails(includeAttachments = false): Promise<ComposedEmail[]> {
   try {
-    const records = await prisma.composedEmail.findMany();
+    const records = await prisma.composedEmail.findMany({
+      include: includeAttachments ? { attachments: true } : undefined,
+      orderBy: { createdAt: "desc" },
+    });
 
     if (records.length === 0) {
       return [];
@@ -44,26 +51,25 @@ export async function getAllEmails(): Promise<ComposedEmail[]> {
           return null;
         }
 
-        return validationResult.value;
+        return { ...validationResult.value, attachments: (record as any).attachments || [] } as ComposedEmail & { attachments: any[] };
       })
-      .filter((value: ComposedEmail | null) => !!value) as ComposedEmail[];
+      .filter((value: ComposedEmail | null) => !!value) as (ComposedEmail & { attachments: any[] })[];
 
-    return storedEmails.sort(
-      (a: ComposedEmail, b: ComposedEmail) =>
-        b.createdAt.getTime() - a.createdAt.getTime(),
-    );
+    return storedEmails;
   } catch (error) {
     console.error("Error reading emails:", error);
     return [];
   }
 }
 
-export async function getEmailById(id: string): Promise<ComposedEmail | null> {
+export async function getEmailById(
+  id: string,
+  includeAttachments = false,
+): Promise<ComposedEmail | null> {
   try {
     const record = await prisma.composedEmail.findUnique({
-      where: {
-        id,
-      },
+      where: { id },
+      include: includeAttachments ? { attachments: true } : undefined,
     });
 
     if (!record) {
@@ -77,19 +83,24 @@ export async function getEmailById(id: string): Promise<ComposedEmail | null> {
       return null;
     }
 
-    return validationResult.value;
+    return { ...validationResult.value, attachments: (record as any).attachments || [] } as ComposedEmail & { attachments: any[] };
   } catch (error) {
     console.error(`Error reading email ${id}:`, error);
     return null;
   }
 }
 
-export async function deleteEmailById(id: string): Promise<void> {
+export async function deleteEmailById(
+  id: string,
+  s3Service?: S3Service,
+): Promise<void> {
   try {
+    if (s3Service) {
+      await s3Service.deleteAttachmentsByEmailId(id);
+    }
+
     await prisma.composedEmail.delete({
-      where: {
-        id,
-      },
+      where: { id },
     });
   } catch (error) {
     console.error(`Error deleting email ${id}:`, error);
@@ -113,7 +124,6 @@ export async function sendEmail({
   try {
     const toAddresses = Array.isArray(to) ? to : [to];
 
-    // Render React email component to HTML if provided
     const html = reactEmail ? await render(reactEmail) : undefined;
 
     const info = await localTransport.sendMail({
@@ -163,6 +173,7 @@ export async function constructAndSaveEmail({
       subject,
       html: sanitisedHtml,
       text,
+      date: null,
     };
     const storedEmail = await saveEmail(email);
 
@@ -175,9 +186,35 @@ export async function constructAndSaveEmail({
 
 export async function saveEmail(
   email: NewComposedEmail,
+  attachments?: { contentId: string | null; s3Key: string; filename: string; contentType: string; size: number }[],
 ): Promise<ComposedEmail> {
+  if (email.html) {
+    const window = new JSDOM("").window;
+    const purify = DOMPurify(window);
+    email.html = purify.sanitize(email.html);
+  }
+
   const record = await prisma.composedEmail.create({
-    data: email,
+    data: {
+      from: email.from,
+      to: email.to,
+      subject: email.subject,
+      html: email.html,
+      text: email.text,
+      date: email.date,
+      attachments: attachments
+        ? {
+            create: attachments.map((att) => ({
+              filename: att.filename,
+              contentType: att.contentType,
+              size: att.size,
+              s3Key: att.s3Key,
+              contentId: att.contentId,
+            })),
+          }
+        : undefined,
+    },
+    include: attachments ? { attachments: true } : undefined,
   });
 
   const validationResult = validateComposedEmail(record);
@@ -186,5 +223,19 @@ export async function saveEmail(
     return Promise.reject(new Error(validationResult.error));
   }
 
-  return validationResult.value;
+  return { ...validationResult.value, attachments: (record as any).attachments || [] } as ComposedEmail & { attachments: any[] };
+}
+
+export function createS3ServiceFromEnv() {
+  const deps = createS3Dependencies({
+    endpoint: ENV_CONFIG.s3.endpoint,
+    bucket: ENV_CONFIG.s3.bucket,
+    credentials: {
+      accessKeyId: ENV_CONFIG.s3.accessKey,
+      secretAccessKey: ENV_CONFIG.s3.secretKey,
+    },
+    region: ENV_CONFIG.s3.region,
+    forcePathStyle: true,
+  });
+  return createS3Service(deps);
 }

@@ -60,6 +60,7 @@ export default function ComposeEmailForm() {
           subject: formData.subject,
           text: formData.text,
           html: formData.html,
+          date: null,
         };
         await sendEmail(emailData);
 
