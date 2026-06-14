@@ -2,7 +2,7 @@
 
 import { PropsWithChildren } from "react";
 
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "sonner";
 
 import Navbar from "@/components/core/Navbar";
 import Sidebar from "@/components/core/Sidebar";
@@ -14,10 +14,7 @@ export default function Providers({ children }: PropsWithChildren) {
       <Sidebar>{children}</Sidebar>
       <Toaster
         position="bottom-right"
-        gutter={15}
-        toastOptions={{
-          duration: 3000,
-        }}
+        duration={3000}
       />
     </>
   );

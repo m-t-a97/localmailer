@@ -3,19 +3,38 @@
 import { useState, useEffect } from "react";
 
 import { Loader2, Play, PowerOff } from "lucide-react";
+import { toast } from "sonner";
 
 import { SmtpServerAction } from "@repo/data-commons";
 
-import { useToast } from "@/hooks/useToast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
   checkSmtpServerStatus,
   toggleSmtpServer,
 } from "@/services/client/smtp.service";
 
-export default function SmtpServerSettings() {
-  const { toastCustom } = useToast();
+function StatusDot({ isRunning }: { isRunning: boolean }) {
+  return (
+    <div className="inline-grid *:[grid-area:1/1]">
+      <div
+        className={cn(
+          "h-3.5 w-3.5 animate-ping rounded-full",
+          isRunning ? "bg-green-500" : "bg-red-500",
+        )}
+      />
+      <div
+        className={cn(
+          "h-3.5 w-3.5 rounded-full",
+          isRunning ? "bg-green-500" : "bg-red-500",
+        )}
+      />
+    </div>
+  );
+}
 
+export default function SmtpServerSettings() {
   const [smtpPort, setSmtpPort] = useState<string>("2525");
   const [isServerRunning, setIsServerRunning] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -43,132 +62,116 @@ export default function SmtpServerSettings() {
       setIsLoading(true);
       await toggleSmtpServer(action);
       setIsServerRunning(isServerStarted);
-      toastCustom({
-        title: isServerStarted ? "Server Started" : "Server Stopped",
-        description: isServerStarted
-          ? `SMTP server is now running on port ${smtpPort}`
-          : "SMTP server stopped",
-        variant: isServerStarted ? "success" : "error",
-      });
+      if (isServerStarted) {
+        toast.success(`SMTP server is now running on port ${smtpPort}`);
+      } else {
+        toast.success("SMTP server stopped");
+      }
     } catch (error) {
       console.error("Error starting server:", error);
-      toastCustom({
-        title: "Error",
-        description: isServerStarted
-          ? "Failed to start the SMTP server"
-          : "Failed to stop the SMTP server",
-        variant: "error",
-      });
+      if (isServerStarted) {
+        toast.error("Failed to start the SMTP server");
+      } else {
+        toast.error("Failed to stop the SMTP server");
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="w-full p-4">
+    <div className="space-y-4">
       {/* SERVER STATUS */}
-      <div className="flex flex-col items-center justify-between gap-1 sm:flex-row">
-        <div className="mb-2 sm:mb-0">
-          <label htmlFor="server-status" className="block">
-            Server Status
-          </label>
-
-          <div className="flex items-center space-x-2">
-            <div className="inline-grid *:[grid-area:1/1]">
-              <div
-                className={cn(
-                  "status status-lg animate-ping",
-                  isServerRunning ? "status-success" : "status-error",
-                )}
-              />
-              <div
-                className={cn(
-                  "status status-lg",
-                  isServerRunning ? "status-success" : "status-error",
-                )}
-              />
-            </div>{" "}
+      <div className="rounded-xl border border-border/50 bg-card p-5">
+        <label className="text-sm font-medium text-foreground mb-3 block">
+          Server Status
+        </label>
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-3">
+            <StatusDot isRunning={isServerRunning} />
             <span
               className={cn(
-                "text-sm",
-                isServerRunning ? "text-success" : "text-error",
+                "text-sm font-medium",
+                isServerRunning
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-destructive",
               )}
             >
               {isServerRunning ? "Running" : "Stopped"}
             </span>
           </div>
-        </div>
 
-        <button
-          className={cn("btn", isServerRunning ? "btn-error" : "btn-success")}
-          onClick={
-            isServerRunning
-              ? () => handleToggleServer("stop")
-              : () => handleToggleServer("start")
-          }
-          disabled={isLoading}
-        >
-          <span>
+          <Button
+            variant={isServerRunning ? "destructive" : "default"}
+            className="gap-2 min-w-[140px]"
+            onClick={
+              isServerRunning
+                ? () => handleToggleServer("stop")
+                : () => handleToggleServer("start")
+            }
+            disabled={isLoading}
+          >
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-white" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : isServerRunning ? (
-              <PowerOff className="h-4 w-4 text-white" />
+              <PowerOff className="h-4 w-4" />
             ) : (
-              <Play className="h-4 w-4 text-white" />
+              <Play className="h-4 w-4" />
             )}
-          </span>
-
-          {isServerRunning ? (
-            <span className="text-white">Stop Server</span>
-          ) : (
-            <span className="text-white">Start Server</span>
-          )}
-        </button>
+            {isServerRunning ? "Stop Server" : "Start Server"}
+          </Button>
+        </div>
       </div>
 
-      {/* SMPT PORT */}
-      <div className="mt-4 space-y-2">
-        <label htmlFor="smtp-port" className="block">
+      {/* SMTP PORT */}
+      <div className="rounded-xl border border-border/50 bg-card p-5">
+        <label
+          htmlFor="smtp-port"
+          className="text-sm font-medium text-foreground mb-3 block"
+        >
           SMTP Port
         </label>
-        <div className="flex space-x-2">
-          <input
+        <div className="flex items-center gap-2">
+          <Input
             id="smtp-port"
             type="number"
-            className="input border border-solid"
+            className="max-w-[200px]"
             value={smtpPort}
             onChange={(e) => setSmtpPort(e.target.value)}
             disabled={isServerRunning}
           />
-          <button
-            className="btn btn-outline"
+          <Button
+            variant="outline"
             disabled={isServerRunning}
             onClick={() => setSmtpPort("2525")}
           >
             Reset
-          </button>
+          </Button>
         </div>
-        <p className="text-sm text-gray-500">
+        <p className="text-xs text-muted-foreground mt-2">
           Default port is 2525. You need to restart the server for changes to
           take effect.
         </p>
       </div>
 
       {/* SMTP CONFIG */}
-      <div className="mt-4">
-        <label className="mb-2 block">SMTP Configuration</label>
-        <div className="bg-base-200 rounded-md p-2">
-          <ul className="flex flex-col gap-1 text-sm">
-            {[
-              "Host: localhost",
-              `Port: ${smtpPort}`,
-              "Secure: false",
-              "Auth: Not required (accepts any credentials)",
-              "TLS: Not required",
-            ].map((value: string, index: number) => (
-              <li key={index}>{value}</li>
-            ))}
-          </ul>
+      <div className="rounded-xl border border-border/50 bg-card p-5">
+        <label className="text-sm font-medium text-foreground mb-3 block">
+          SMTP Configuration
+        </label>
+        <div className="bg-muted/50 rounded-xl p-4 font-mono text-sm space-y-1.5">
+          {[
+            "Host: localhost",
+            `Port: ${smtpPort}`,
+            "Secure: false",
+            "Auth: Not required (accepts any credentials)",
+            "TLS: Not required",
+          ].map((value: string, index: number) => (
+            <div key={index} className="flex items-center gap-2">
+              <span className="text-muted-foreground/40">&bull;</span>
+              <span>{value}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>

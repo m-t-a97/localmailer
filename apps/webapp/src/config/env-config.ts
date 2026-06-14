@@ -6,6 +6,7 @@ const ENV_CONFIG = {
     user: process.env.SMTP_USER as string,
     pass: process.env.SMTP_PASS as string,
   },
+  logLevel: process.env.LOG_LEVEL || "info",
 } as const;
 
 export default ENV_CONFIG;

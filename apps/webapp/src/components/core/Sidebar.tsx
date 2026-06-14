@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { PropsWithChildren } from "react";
+import { PropsWithChildren } from "react";
 
 import { Mail, Pen, Settings } from "lucide-react";
 
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { useUiStore } from "@/stores/ui-store";
 
 const navItems = [
   { href: "/", label: "Inbox", icon: Mail },
@@ -14,51 +16,55 @@ const navItems = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-export default function Sidebar({ children }: PropsWithChildren) {
-  const pathname = usePathname();
+function NavContent({ pathname }: { pathname: string }) {
+  const setSidebarOpen = useUiStore((s) => s.setSidebarOpen);
 
   return (
-    <div className="drawer lg:drawer-open">
-      <input id="drawer" type="checkbox" className="drawer-toggle" />
-      <div className="drawer-content">
-        {/* Page content */}
-        <div className="mt-12">
-          <>{children}</>
-        </div>
-      </div>
+    <nav className="mt-14 flex h-full flex-1 flex-col gap-1">
+      {navItems.map((item) => {
+        const isActiveItem = pathname === item.href;
 
-      <div className="drawer-side">
-        <label
-          htmlFor="drawer"
-          aria-label="close sidebar"
-          className="drawer-overlay"
-        />
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={cn(
+              "group flex items-center gap-2 py-2 text-sm font-medium rounded-none rounded-r-lg transition-all duration-200 pl-3",
+              isActiveItem
+                ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-2 border-sidebar-primary pl-2.5"
+                : "hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground hover:border-l-2 hover:border-sidebar-primary/50 hover:pl-2.5",
+            )}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <item.icon className="h-5 w-5 text-sidebar-foreground/70 group-hover:text-sidebar-foreground transition-colors duration-200" />
+            <span className="text-sm font-medium">{item.label}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
 
-        <ul className="menu min-h-full w-20 bg-gray-100 p-4">
-          {/* Sidebar content */}
-          <div className="mt-14 flex h-full flex-1 flex-col gap-5">
-            {navItems.map((item) => {
-              const isActiveItem = pathname === item.href;
+export default function Sidebar({ children }: PropsWithChildren) {
+  const pathname = usePathname();
+  const isSidebarOpen = useUiStore((s) => s.isSidebarOpen);
+  const setSidebarOpen = useUiStore((s) => s.setSidebarOpen);
 
-              return (
-                <li
-                  key={item.href}
-                  className="flex flex-row items-center justify-start last:mt-auto"
-                >
-                  <Link
-                    href={item.href}
-                    className={cn("w-full", isActiveItem && "bg-gray-300")}
-                  >
-                    <span>
-                      <item.icon className="h-5 w-5 text-black" />
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </div>
-        </ul>
-      </div>
+  return (
+    <div className="flex">
+      <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetContent side="left" className="w-56 p-4">
+          <NavContent pathname={pathname} />
+        </SheetContent>
+      </Sheet>
+
+      <aside className="hidden lg:flex lg:w-56 min-h-screen flex-col bg-sidebar/50 p-4 border-r border-border">
+        <NavContent pathname={pathname} />
+      </aside>
+
+      <main className="flex-1 mt-14 p-6">
+        {children}
+      </main>
     </div>
   );
 }

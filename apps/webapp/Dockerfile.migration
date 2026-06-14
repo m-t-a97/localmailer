@@ -1,12 +1,11 @@
 # ---------------------------------
 # BASE STAGE
 # ---------------------------------
-FROM node:lts-alpine AS base
+FROM node:lts-krypton AS base
 
 RUN apk update && apk add --no-cache libc6-compat
 
-RUN corepack enable pnpm
-RUN corepack prepare --activate pnpm@10.26.1
+RUN npm i -g pnpm@11.6.0
 # ---------------------------------
 
 # ---------------------------------

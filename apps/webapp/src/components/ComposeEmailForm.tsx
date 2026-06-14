@@ -5,12 +5,16 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Mail, Send } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import { NewComposedEmail } from "@repo/data-commons";
 
 import { EmailPreview } from "@/components/EmailPreview";
-import { useToast } from "@/hooks/useToast";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { sendEmail } from "@/services/client/email.service";
 
 const formSchema = z.object({
@@ -23,8 +27,6 @@ const formSchema = z.object({
 type FormSchema = z.infer<typeof formSchema>;
 
 export default function ComposeEmailForm() {
-  const { toastCustom } = useToast();
-
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const {
@@ -61,163 +63,158 @@ export default function ComposeEmailForm() {
         };
         await sendEmail(emailData);
 
-        toastCustom({
-          title: "Success",
-          description: `Email sent successfully`,
-          variant: "success",
-        });
+        toast.success("Email sent successfully");
 
-        // Reset the form after successful submission
         reset();
       }
     } catch (error) {
       console.error("Error sending email:", error);
-      toastCustom({
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "error",
-      });
+      toast.error(
+        error instanceof Error ? error.message : "An unknown error occurred",
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="card bg-base-100 w-full border shadow-sm">
-      <div className="card-body items-center text-center">
-        <h2 className="card-title">
-          <Mail className="mr-2 h-5 w-5" />
+    <Card className="w-full shadow-sm border-border/50">
+      <CardContent className="items-start text-left">
+        <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+          <Mail className="h-5 w-5" />
           Compose Email
-        </h2>
-        <p className="mb-5">Create and send a new email message</p>
+        </CardTitle>
+        <p className="text-sm text-muted-foreground mb-6">
+          Create and send a new email message
+        </p>
 
         <form
-          className="w-full space-y-6"
+          className="w-full space-y-5"
           onSubmit={handleSubmit(handleFormOnSubmit)}
         >
-          <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label htmlFor="from" className="block text-left">
+          <div className="grid w-full grid-cols-1 gap-5 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <label htmlFor="from" className="text-sm font-medium text-foreground block">
                 From
               </label>
-              <input
+              <Input
                 type="email"
                 placeholder="example@example.com"
-                className="input w-full border border-solid border-gray-300"
                 {...register("from")}
               />
               {errors.from && (
-                <p className="text-error text-left text-sm">
+                <p className="text-xs text-destructive mt-1">
                   {errors.from.message}
                 </p>
               )}
             </div>
 
-            <div>
-              <label htmlFor="to" className="block text-left">
+            <div className="space-y-1.5">
+              <label htmlFor="to" className="text-sm font-medium text-foreground block">
                 To
               </label>
-              <input
+              <Input
                 type="text"
                 placeholder="example@example.com"
-                className="input w-full border border-solid border-gray-300"
                 {...register("to")}
               />
               {errors.to && (
-                <p className="text-error text-left text-sm">
+                <p className="text-xs text-destructive mt-1">
                   {errors.to.message}
                 </p>
               )}
-              <p>Separate multiple recipients with commas</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Separate multiple recipients with commas
+              </p>
             </div>
           </div>
 
-          <div>
-            <label htmlFor="subject" className="block text-left">
+          <div className="space-y-1.5">
+            <label htmlFor="subject" className="text-sm font-medium text-foreground block">
               Subject
             </label>
-            <input
+            <Input
               type="text"
               placeholder="Enter your subject"
-              className="input w-full border border-solid border-gray-300"
               {...register("subject")}
             />
             {errors.subject && (
-              <p className="text-error text-left text-sm">
+              <p className="text-xs text-destructive mt-1">
                 {errors.subject.message}
               </p>
             )}
           </div>
 
-          <div className="bg-base-200 p-5">
-            <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <div>
-                  <label htmlFor="html" className="block">
-                    HTML Content
-                  </label>
-                  <textarea
-                    placeholder="Type your html content here..."
-                    className="textarea min-h-75 w-full border border-solid border-gray-300"
-                    {...register("html")}
-                  />
-                  {errors.html && (
-                    <p className="text-error text-center text-sm">
-                      {errors.html.message}
-                    </p>
-                  )}
-                  <p>Enter valid HTML for your email</p>
-                </div>
+          <div className="rounded-xl border border-border/50 bg-muted/30 p-6 space-y-8">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <label htmlFor="html" className="text-sm font-medium text-foreground block">
+                  HTML Content
+                </label>
+                <Textarea
+                  placeholder="Type your html content here..."
+                  className="min-h-[300px]"
+                  {...register("html")}
+                />
+                {errors.html && (
+                  <p className="text-xs text-destructive mt-1">
+                    {errors.html.message}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enter valid HTML for your email
+                </p>
               </div>
 
-              <div>
-                <label className="block">Preview</label>
-                <div className="min-h-75 rounded-md border bg-white p-4">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground block">
+                  Preview
+                </label>
+                <div className="rounded-xl border border-border/50 bg-background p-4 shadow-sm min-h-[300px]">
                   <EmailPreview html={watch("html")} />
                 </div>
               </div>
             </div>
 
-            <div>
-              <label htmlFor="subject" className="block">
+            <div className="space-y-1.5">
+              <label htmlFor="text" className="text-sm font-medium text-foreground block">
                 Plain Text Fallback
               </label>
-              <textarea
+              <Textarea
                 placeholder="Type your text here..."
-                className="textarea w-full border border-solid border-gray-300"
                 {...register("text")}
               />
               {errors.text && (
-                <p className="text-error text-center text-sm">
+                <p className="text-xs text-destructive mt-1">
                   {errors.text.message}
                 </p>
               )}
-              <p>
+              <p className="text-xs text-muted-foreground mt-1">
                 This will be shown in email clients that don&#39;t support HTML
               </p>
             </div>
           </div>
 
-          <button
+          <Button
             type="submit"
-            className="btn btn-success w-full"
+            variant="default"
+            className="w-full h-11 text-base gap-2 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200"
             disabled={!isValid || isSubmitting}
           >
             {isSubmitting ? (
-              <span className="flex flex-row items-center text-white">
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
                 Sending...
               </span>
             ) : (
-              <span className="flex flex-row items-center text-white">
-                <Send className="mr-2 h-4 w-4" />
+              <span className="flex items-center gap-2">
+                <Send className="h-4 w-4" />
                 Send Email
               </span>
             )}
-          </button>
+          </Button>
         </form>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -7,7 +7,7 @@ WORKDIR /root
 
 RUN apt update && apt install -y \
   apt-transport-https ca-certificates gnupg \
-  curl wget git zip unzip less zsh net-tools iputils-ping jq lsof
+  curl wget git zip unzip less zsh net-tools iputils-ping jq lsof ripgrep
 
 ENV HOME="/root"
 
@@ -32,7 +32,7 @@ ENV SHELL=/bin/zsh
 # --------------------------------------
 # NPM
 # --------------------------------------
-RUN npm i -g pnpm@10.26.1
+RUN npm i -g pnpm@11.6.0
 # --------------------------------------
 
 # --------------------------------------

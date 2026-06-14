@@ -66,13 +66,13 @@ Spin up a docker compose stack to run all the relevant services needed for devel
 ```bash
 # Development
 $ docker compose -f docker-compose.dev.yml down -v && \
-  docker compose --env-file=./webapp.env -f docker-compose.dev.yml build --parallel && \
-  docker compose --env-file=./webapp.env -f docker-compose.dev.yml up -d
+  docker compose --env-file=./docker-compose.env -f docker-compose.dev.yml build --parallel && \
+  docker compose --env-file=./docker-compose.env -f docker-compose.dev.yml up -d
 
 # Production
 $ docker compose -f docker-compose.prod.yml down -v && \
-  docker compose --env-file=./webapp.env -f docker-compose.prod.yml build --parallel && \
-  docker compose --env-file=./webapp.env --env-file=./db.env -f docker-compose.prod.yml up -d
+  docker compose --env-file=./docker-compose.env -f docker-compose.prod.yml build --parallel && \
+  docker compose --env-file=./docker-compose.env -f docker-compose.prod.yml up -d
 ```
 
 Please follow the [Contributing](./CONTRIBUTING.md) guide to set up your environment.

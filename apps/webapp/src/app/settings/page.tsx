@@ -1,41 +1,47 @@
 import AboutApp from "@/components/settings/AboutApp";
 import SmtpServerSettings from "@/components/settings/SmtpServerSettings";
+import {
+  Card,
+  CardContent,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
 export default function SettingsPage() {
   return (
-    <div className="max-page-width p-6">
-      <div className="card bg-base-100 card-md h-full w-full border shadow-sm">
-        <div className="card-body">
-          <h2 className="card-title">Email Server Settings</h2>
-          <p>Configure your local email development server</p>
-
-          {/* Tabs */}
-          <div role="tablist" className="tabs tabs-box gap-1">
-            {/* Tab 1 */}
-            <input
-              type="radio"
-              name="tabs"
-              className="tab"
-              aria-label="SMTP Server"
-              defaultChecked
-            />
-            <div className="tab-content bg-base-100">
-              <SmtpServerSettings />
-            </div>
-
-            {/* Tab 2 */}
-            <input
-              type="radio"
-              name="tabs"
-              className="tab"
-              aria-label="About"
-            />
-            <div className="tab-content bg-base-100">
-              <AboutApp />
-            </div>
+    <div className="max-w-4xl mx-auto p-6">
+      <Card className="h-full w-full shadow-sm border-border/50">
+        <CardContent>
+          <div className="border-b border-border/50 pb-4 mb-4">
+            <CardTitle className="text-xl font-semibold">
+              Email Server Settings
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Configure your local email development server
+            </p>
           </div>
-        </div>
-      </div>
+
+          <Tabs defaultValue="smtp-server">
+            <TabsList className="mb-4">
+              <TabsTrigger value="smtp-server">SMTP Server</TabsTrigger>
+              <TabsTrigger value="about">About</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="smtp-server">
+              <SmtpServerSettings />
+            </TabsContent>
+
+            <TabsContent value="about">
+              <AboutApp />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
