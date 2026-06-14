@@ -1,14 +1,4 @@
 services:
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      - "MINIO_ROOT_USER=${S3_ACCESS_KEY}"
-      - "MINIO_ROOT_PASSWORD=${S3_SECRET_KEY}"
-
   postgres:
     image: postgres:18
     healthcheck:
@@ -20,6 +10,12 @@ services:
       - "POSTGRES_USER=${POSTGRES_USER}"
       - "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
       - "POSTGRES_DB=${POSTGRES_DB}"
+
+  rustfs:
+    image: rustfs/rustfs:1.0.0-beta.6
+    ports:
+      - "${RUSTFS_PORT}:9000"
+      - "${RUSTFS_CONSOLE_PORT}:9001"
 
   migrate:
     build:
