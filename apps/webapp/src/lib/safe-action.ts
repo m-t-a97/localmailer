@@ -1,7 +1,4 @@
-import {
-  createSafeActionClient,
-  DEFAULT_SERVER_ERROR_MESSAGE,
-} from "next-safe-action";
+import { createSafeActionClient, DEFAULT_SERVER_ERROR_MESSAGE } from "next-safe-action";
 
 import { logger } from "./logger/logger-server";
 
@@ -9,9 +6,9 @@ export class ActionError extends Error {}
 
 export const actionClient = createSafeActionClient({
   // Can also be an async function.
-  handleServerError(e, utils) {
+  handleServerError(e) {
     // You can access these properties inside the `utils` object.
-    const { clientInput, bindArgsClientInputs, metadata, ctx } = utils;
+    // const { clientInput, bindArgsClientInputs, metadata, ctx } = utils;
 
     logger.error(e, "Action error");
 
