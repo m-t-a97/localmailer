@@ -11,7 +11,7 @@ on:
     branches: [dev, main]
 
 jobs:
-  build_and_test:
+  ci:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,7 +21,7 @@ jobs:
       - name: Enable Corepack & Init Pnpm
         run: |
           npx corepack enable pnpm
-          npx corepack prepare pnpm@11.6.0 --activate
+          npx corepack prepare pnpm@11.24.0 --activate
 
       - name: Install Node.js
         uses: actions/setup-node@v6
@@ -31,12 +31,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Generate Prisma Client
-        env:
-          # This is here just to satisfy Prisma's need for a DATABASE_URL during generation
-          DATABASE_URL: "postgresql://user:password@localhost:5432/localmailer?schema=public"
-        run: cd apps/webapp && pnpm prisma:generate:docker
 
       - name: Build
         run: pnpm dlx turbo run webapp#build

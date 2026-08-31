@@ -34,11 +34,7 @@ export function EmailPreview({ html }: Props) {
   }
 
   if (error) {
-    return (
-      <div className="text-destructive flex h-full items-center justify-center">
-        {error}
-      </div>
-    );
+    return <div className="text-destructive flex h-full items-center justify-center">{error}</div>;
   }
 
   return (

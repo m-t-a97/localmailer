@@ -1,7 +1,7 @@
 {
   "name": "localmailer",
   "private": true,
-  "packageManager": "pnpm@11.6.0",
+  "packageManager": "pnpm@11.24.0",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
@@ -9,16 +9,20 @@
     "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "prepare": "husky"
+    "prepare": "husky",
+    "check-npm-deps-freshness": "tsx ./scripts/check-npm-dep-freshness.ts"
   },
   "devDependencies": {
-    "@commitlint/cli": "^21.0.2",
-    "@commitlint/config-conventional": "^21.0.2",
-    "@types/node": "^25.9.3",
+    "oxfmt": "^0.65.0",
+    "oxlint": "^1.80.0",
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
+    "@types/node": "^26.4.0",
     "husky": "^9.1.7",
-    "lint-staged": "^17.0.7",
-    "prettier": "^3.8.4",
-    "turbo": "^2.9.18",
+    "lint-staged": "^17.4.1",
+    "prettier": "^3.9.6",
+    "tsx": "^4.23.13",
+    "turbo": "^2.10.12",
     "typescript": "6.0.3"
   }
 }

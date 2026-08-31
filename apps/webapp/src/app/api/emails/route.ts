@@ -2,22 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { validateNewComposedEmail } from "@repo/data-commons";
 
-import {
-  getAllEmails,
-  getEmailById,
-  deleteEmailById,
-  createS3ServiceFromEnv,
-} from "@/services/server/email.service";
+import { getAllEmails, getEmailById, deleteEmailById } from "@/services/server/email.service";
 import { constructAndSaveEmail } from "@/services/server/email.service";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
-    const includeAttachments = searchParams.get("includeAttachments") === "true";
 
     if (id) {
-      const email = await getEmailById(id, includeAttachments);
+      const email = await getEmailById(id);
 
       if (!email) {
         return NextResponse.json({ error: "Email not found" }, { status: 404 });
@@ -26,16 +20,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(email);
     }
 
-    const emails = await getAllEmails(includeAttachments);
+    const emails = await getAllEmails();
 
     return NextResponse.json(emails);
   } catch (error) {
     console.error("Error fetching emails:", error);
 
-    return NextResponse.json(
-      { error: "Failed to fetch emails" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to fetch emails" }, { status: 500 });
   }
 }
 
@@ -46,31 +37,20 @@ export async function POST(request: NextRequest) {
     const validationResult = validateNewComposedEmail(body);
 
     if (!validationResult.success) {
-      return NextResponse.json(
-        { error: validationResult.error },
-        { status: 422 },
-      );
+      return NextResponse.json({ error: validationResult.error }, { status: 422 });
     }
 
-    const { success, emailId } = await constructAndSaveEmail(
-      validationResult.value,
-    );
+    const { success, emailId } = await constructAndSaveEmail(validationResult.value);
 
     if (!success) {
-      return NextResponse.json(
-        { error: "Failed to send email" },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, emailId });
   } catch (error) {
     console.error("Error sending email:", error);
 
-    return NextResponse.json(
-      { error: "Failed to send email" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
   }
 }
 
@@ -80,24 +60,14 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json(
-        { error: "Email ID is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Email ID is required" }, { status: 400 });
     }
 
-    const s3Service = createS3ServiceFromEnv();
-    await deleteEmailById(id, s3Service);
+    await deleteEmailById(id);
 
-    return NextResponse.json(
-      { message: "Email deleted successfully" },
-      { status: 200 },
-    );
+    return NextResponse.json({ message: "Email deleted successfully" }, { status: 200 });
   } catch (error) {
     console.error("Error deleting email:", error);
-    return NextResponse.json(
-      { error: "Failed to delete email" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to delete email" }, { status: 500 });
   }
 }

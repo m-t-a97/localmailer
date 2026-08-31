@@ -1,0 +1,14 @@
+// use prisma-next
+
+model ComposedEmails {
+  id               String        @id() @default(uuid())  
+  from             String
+  to               String[]           
+  subject          String
+  html             String
+  text             String
+  date             DateTime?
+  createdAt        DateTime      @default(now()) @map("created_at")
+
+  @@map("composed_emails")
+}

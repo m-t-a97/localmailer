@@ -1,11 +1,11 @@
 # ---------------------------------
 # BASE STAGE
 # ---------------------------------
-FROM node:lts-krypton AS base
+FROM node:lts-alpine AS base
 
 RUN apk update && apk add --no-cache libc6-compat
 
-RUN npm i -g pnpm@11.6.0
+RUN npm i -g pnpm@11.24.0
 # ---------------------------------
 
 # ---------------------------------
@@ -30,10 +30,8 @@ FROM base AS builder
 RUN apk update
 
 WORKDIR /app
-
 ARG DATABASE_URL
-ENV DATABASE_URL=$DATABASE_URL
-
+ENV DATABASE_URL=${DATABASE_URL}
 # First install the dependencies (as they change less often)
 COPY .gitignore .gitignore
 COPY --from=pruner /app/out/json/ .
@@ -42,12 +40,8 @@ RUN pnpm i --frozen-lockfile
 
 COPY --from=pruner /app/out/full/ .
 
-# Navigate to the webapp project
 WORKDIR /app/apps/webapp
-
-# Run the prisma generate command from there to generate the prisma client
-RUN pnpm run prisma:generate:docker
-# Then navigate back to the root of the project to continue with the rest of the build
+RUN pnpm run prisma:contract:emit
 WORKDIR /app
 
 RUN pnpm dlx turbo run build --filter=webapp...

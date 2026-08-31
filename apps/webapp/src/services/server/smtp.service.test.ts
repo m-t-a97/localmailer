@@ -7,21 +7,8 @@ vi.mock("./email.service", () => ({
   saveEmail: vi.fn(),
 }));
 
-function createMockS3Service() {
-  return {
-    ensureBucket: vi.fn(),
-    uploadAttachment: vi.fn(),
-    getPresignedDownloadUrl: vi.fn(),
-    getObjectStream: vi.fn(),
-    deleteAttachmentsByEmailId: vi.fn(),
-  };
-}
-
 describe("SMTP Service", () => {
-  let mockS3: ReturnType<typeof createMockS3Service>;
-
   beforeEach(() => {
-    mockS3 = createMockS3Service();
     vi.clearAllMocks();
   });
 
@@ -31,15 +18,15 @@ describe("SMTP Service", () => {
 
   describe("startSMTPServer", () => {
     it("starts the SMTP server", () => {
-      startSMTPServer(0, mockS3 as any);
+      startSMTPServer(0);
 
       expect(true).toBe(true);
     });
 
     it("does not start a second server if already running", () => {
       const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-      startSMTPServer(0, mockS3 as any);
-      startSMTPServer(0, mockS3 as any);
+      startSMTPServer(0);
+      startSMTPServer(0);
 
       const alreadyRunningMessages = logSpy.mock.calls.filter(
         ([msg]: string[]) => msg === "SMTP server already running",
@@ -51,7 +38,7 @@ describe("SMTP Service", () => {
 
   describe("stopSMTPServer", () => {
     it("stops the SMTP server gracefully", () => {
-      startSMTPServer(0, mockS3 as any);
+      startSMTPServer(0);
       stopSMTPServer();
 
       expect(true).toBe(true);
@@ -65,7 +52,7 @@ describe("SMTP Service", () => {
   });
 
   describe("email capture", () => {
-    it("parses and saves a simple email without attachments", async () => {
+    it("parses and saves a simple email", async () => {
       const mockSaveEmail = vi.mocked(emailService.saveEmail);
       mockSaveEmail.mockResolvedValueOnce({
         id: "email-1",
