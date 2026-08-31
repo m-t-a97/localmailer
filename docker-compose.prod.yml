@@ -11,12 +11,6 @@ services:
       - "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
       - "POSTGRES_DB=${POSTGRES_DB}"
 
-  rustfs:
-    image: rustfs/rustfs:1.0.0-beta.6
-    ports:
-      - "${RUSTFS_PORT}:9000"
-      - "${RUSTFS_CONSOLE_PORT}:9001"
-
   migrate:
     build:
       context: .

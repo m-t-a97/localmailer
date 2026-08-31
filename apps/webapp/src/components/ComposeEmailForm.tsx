@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { sendEmail } from "@/services/client/email.service";
 
 const formSchema = z.object({
-  from: z.string().email({ message: "Please enter a valid email address" }),
+  from: z.string({ message: "Please enter a valid email address" }),
   to: z.string().min(1, { message: "Please enter at least one recipient" }),
   subject: z.string().min(1, { message: "Please enter a subject" }),
   html: z.string().min(1, { message: "Please enter html content" }),
@@ -47,6 +47,9 @@ export default function ComposeEmailForm() {
     resolver: zodResolver(formSchema),
   });
 
+  // oxlint-disable-next-line react/incompatible-library
+  const watchedHtml = watch("html");
+
   const handleFormOnSubmit = async (formData: FormSchema): Promise<void> => {
     try {
       if (isValid) {
@@ -70,9 +73,7 @@ export default function ComposeEmailForm() {
       }
     } catch (error) {
       console.error("Error sending email:", error);
-      toast.error(
-        error instanceof Error ? error.message : "An unknown error occurred",
-      );
+      toast.error(error instanceof Error ? error.message : "An unknown error occurred");
     } finally {
       setIsSubmitting(false);
     }
@@ -85,28 +86,17 @@ export default function ComposeEmailForm() {
           <Mail className="h-5 w-5" />
           Compose Email
         </CardTitle>
-        <p className="text-sm text-muted-foreground mb-6">
-          Create and send a new email message
-        </p>
+        <p className="text-sm text-muted-foreground mb-6">Create and send a new email message</p>
 
-        <form
-          className="w-full space-y-5"
-          onSubmit={handleSubmit(handleFormOnSubmit)}
-        >
+        <form className="w-full space-y-5" onSubmit={handleSubmit(handleFormOnSubmit)}>
           <div className="grid w-full grid-cols-1 gap-5 md:grid-cols-2">
             <div className="space-y-1.5">
               <label htmlFor="from" className="text-sm font-medium text-foreground block">
                 From
               </label>
-              <Input
-                type="email"
-                placeholder="example@example.com"
-                {...register("from")}
-              />
+              <Input type="email" placeholder="example@example.com" {...register("from")} />
               {errors.from && (
-                <p className="text-xs text-destructive mt-1">
-                  {errors.from.message}
-                </p>
+                <p className="text-xs text-destructive mt-1">{errors.from.message}</p>
               )}
             </div>
 
@@ -114,16 +104,8 @@ export default function ComposeEmailForm() {
               <label htmlFor="to" className="text-sm font-medium text-foreground block">
                 To
               </label>
-              <Input
-                type="text"
-                placeholder="example@example.com"
-                {...register("to")}
-              />
-              {errors.to && (
-                <p className="text-xs text-destructive mt-1">
-                  {errors.to.message}
-                </p>
-              )}
+              <Input type="text" placeholder="example@example.com" {...register("to")} />
+              {errors.to && <p className="text-xs text-destructive mt-1">{errors.to.message}</p>}
               <p className="text-xs text-muted-foreground mt-1">
                 Separate multiple recipients with commas
               </p>
@@ -134,15 +116,9 @@ export default function ComposeEmailForm() {
             <label htmlFor="subject" className="text-sm font-medium text-foreground block">
               Subject
             </label>
-            <Input
-              type="text"
-              placeholder="Enter your subject"
-              {...register("subject")}
-            />
+            <Input type="text" placeholder="Enter your subject" {...register("subject")} />
             {errors.subject && (
-              <p className="text-xs text-destructive mt-1">
-                {errors.subject.message}
-              </p>
+              <p className="text-xs text-destructive mt-1">{errors.subject.message}</p>
             )}
           </div>
 
@@ -154,13 +130,11 @@ export default function ComposeEmailForm() {
                 </label>
                 <Textarea
                   placeholder="Type your html content here..."
-                  className="min-h-[300px]"
+                  className="min-h-75"
                   {...register("html")}
                 />
                 {errors.html && (
-                  <p className="text-xs text-destructive mt-1">
-                    {errors.html.message}
-                  </p>
+                  <p className="text-xs text-destructive mt-1">{errors.html.message}</p>
                 )}
                 <p className="text-xs text-muted-foreground mt-1">
                   Enter valid HTML for your email
@@ -168,11 +142,9 @@ export default function ComposeEmailForm() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground block">
-                  Preview
-                </label>
-                <div className="rounded-xl border border-border/50 bg-background p-4 shadow-sm min-h-[300px]">
-                  <EmailPreview html={watch("html")} />
+                <label className="text-sm font-medium text-foreground block">Preview</label>
+                <div className="rounded-xl border border-border/50 bg-background p-4 shadow-sm min-h-75">
+                  <EmailPreview html={watchedHtml} />
                 </div>
               </div>
             </div>
@@ -181,14 +153,9 @@ export default function ComposeEmailForm() {
               <label htmlFor="text" className="text-sm font-medium text-foreground block">
                 Plain Text Fallback
               </label>
-              <Textarea
-                placeholder="Type your text here..."
-                {...register("text")}
-              />
+              <Textarea placeholder="Type your text here..." {...register("text")} />
               {errors.text && (
-                <p className="text-xs text-destructive mt-1">
-                  {errors.text.message}
-                </p>
+                <p className="text-xs text-destructive mt-1">{errors.text.message}</p>
               )}
               <p className="text-xs text-muted-foreground mt-1">
                 This will be shown in email clients that don&#39;t support HTML

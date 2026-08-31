@@ -1,0 +1,9 @@
+{
+  "extends": ["../../.oxlintrc.json"],
+  "plugins": ["react", "vitest"],
+  "rules": {
+    "no-unused-vars": "warn",
+    "vitest/require-mock-type-parameters": "off",
+    "vitest/no-conditional-expect": "warn"
+  }
+}

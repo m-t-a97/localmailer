@@ -2,16 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { z } from "zod";
 
-import {
-  getValidationResult,
-  smtpServerActionSchema,
-} from "@repo/data-commons";
+import { getValidationResult, smtpServerActionSchema } from "@repo/data-commons";
 
-import {
-  startSMTPServer,
-  stopSMTPServer,
-} from "@/services/server/smtp.service";
-import { createS3ServiceFromEnv } from "@/services/server/email.service";
+import { startSMTPServer, stopSMTPServer } from "@/services/server/smtp.service";
 
 // GET handler to check server status
 export async function GET() {
@@ -39,10 +32,7 @@ export async function POST(request: NextRequest) {
     const validationResult = getValidationResult<PostSchema>(body, postSchema);
 
     if (!validationResult.success) {
-      return NextResponse.json(
-        { error: validationResult.error },
-        { status: 422 },
-      );
+      return NextResponse.json({ error: validationResult.error }, { status: 422 });
     }
 
     const { action } = validationResult.value;
@@ -50,9 +40,7 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case "start": {
         const port = 2525;
-        const s3Service = createS3ServiceFromEnv();
-        await s3Service.ensureBucket();
-        startSMTPServer(port, s3Service);
+        startSMTPServer(port);
 
         return NextResponse.json({
           success: true,
@@ -73,9 +61,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error managing SMTP server:", error);
 
-    return NextResponse.json(
-      { error: "Failed to manage SMTP server" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to manage SMTP server" }, { status: 500 });
   }
 }

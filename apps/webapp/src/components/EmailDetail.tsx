@@ -1,73 +1,23 @@
-"use client";
+import { FileText } from "lucide-react";
 
-import { Download, FileText } from "lucide-react";
-import { useState } from "react";
+import { ComposedEmail, DateUtils } from "@repo/data-commons";
 
-import { ComposedEmail, DateUtils, EmailAttachment } from "@repo/data-commons";
-
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { toast } from "sonner";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type Props = {
-  email: ComposedEmail & { attachments?: EmailAttachment[] };
+  email: ComposedEmail;
 };
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function useEmailAttachmentDownload() {
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
-
-  const downloadAttachment = async (attachment: EmailAttachment) => {
-    setDownloadingId(attachment.id);
-    try {
-      const response = await fetch(`/api/attachments/${attachment.id}`);
-      if (!response.ok) throw new Error("Failed to get download URL");
-
-      const data = await response.json();
-      const link = document.createElement("a");
-      link.href = data.downloadUrl;
-      link.download = attachment.filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      toast.error("Failed to download attachment");
-      console.error("Download error:", error);
-    } finally {
-      setDownloadingId(null);
-    }
-  };
-
-  return { downloadAttachment, downloadingId };
-}
 
 export default function EmailDetail({ email }: Props) {
   const displayDate = email.date
     ? DateUtils.format(new Date(email.date))
     : DateUtils.format(new Date(email.createdAt));
-  const { downloadAttachment, downloadingId } = useEmailAttachmentDownload();
 
   return (
     <Card className="h-full w-full shadow-sm border-border/50">
       <CardContent>
-        <CardTitle className="text-lg font-semibold mb-4">
-          {email.subject}
-        </CardTitle>
+        <CardTitle className="text-lg font-semibold mb-4">{email.subject}</CardTitle>
 
         <div className="mb-4 space-y-1.5 text-sm">
           <div className="flex items-center gap-2">
@@ -83,32 +33,6 @@ export default function EmailDetail({ email }: Props) {
             <span className="text-foreground">{displayDate}</span>
           </div>
         </div>
-
-        {email.attachments && email.attachments.length > 0 && (
-          <div className="mb-4 space-y-1.5">
-            <span className="text-sm text-muted-foreground font-medium">
-              Attachments ({email.attachments.length})
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {email.attachments.map((att) => (
-                <Button
-                  key={att.id}
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 text-xs"
-                  onClick={() => downloadAttachment(att)}
-                  disabled={downloadingId === att.id}
-                >
-                  <Download className="h-3 w-3" />
-                  <span className="max-w-[120px] truncate">{att.filename}</span>
-                  <span className="text-muted-foreground">
-                    ({formatFileSize(att.size)})
-                  </span>
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
 
         <Tabs defaultValue="rendered">
           <TabsList className="mb-4">

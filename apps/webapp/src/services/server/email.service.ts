@@ -1,3 +1,5 @@
+import "temporal-polyfill/global";
+
 import { JSX } from "react";
 
 import { render } from "@react-email/render";
@@ -5,18 +7,10 @@ import DOMPurify from "dompurify";
 import { JSDOM } from "jsdom";
 import nodemailer from "nodemailer";
 
-import {
-  validateComposedEmail,
-  ComposedEmail,
-  NewComposedEmail,
-  NewEmailAttachment,
-} from "@repo/data-commons";
+import { validateComposedEmail, ComposedEmail, NewComposedEmail } from "@repo/data-commons";
 
 import ENV_CONFIG from "@/config/env-config";
-import prisma from "@/lib/prisma-client";
-
-import { S3Service } from "./s3.service";
-import { S3Dependencies, createS3Dependencies, createS3Service } from "./s3.service";
+import { db } from "@/prisma/db";
 
 const localTransport = nodemailer.createTransport({
   host: ENV_CONFIG.smtp.host,
@@ -31,12 +25,30 @@ const localTransport = nodemailer.createTransport({
   },
 });
 
-export async function getAllEmails(includeAttachments = false): Promise<ComposedEmail[]> {
+function toDate(value: unknown): Date | null {
+  if (value == null) return null;
+  if (value instanceof Date) return value;
+  if (typeof (value as any).epochMilliseconds === "number") {
+    return new Date((value as any).epochMilliseconds);
+  }
+  if (typeof (value as any).epochNanoseconds === "bigint") {
+    return new Date(Number((value as any).epochNanoseconds / 1_000_000n));
+  }
+  return new Date(value as any);
+}
+
+function normalizeRecord(record: any) {
+  if (!record || typeof record !== "object") return record;
+  return {
+    ...record,
+    date: toDate(record.date),
+    createdAt: toDate(record.createdAt) ?? record.createdAt,
+  };
+}
+
+export async function getAllEmails(): Promise<ComposedEmail[]> {
   try {
-    const records = await prisma.composedEmail.findMany({
-      include: includeAttachments ? { attachments: true } : undefined,
-      orderBy: { createdAt: "desc" },
-    });
+    const records = await db.orm.public.ComposedEmails.orderBy((u) => u.createdAt.desc()).all();
 
     if (records.length === 0) {
       return [];
@@ -44,16 +56,19 @@ export async function getAllEmails(includeAttachments = false): Promise<Composed
 
     const storedEmails = records
       .map((record: any) => {
-        const validationResult = validateComposedEmail(record);
+        const normalized = normalizeRecord(record);
+        const validationResult = validateComposedEmail(normalized);
 
         if (!validationResult.success) {
           console.error(validationResult.error);
           return null;
         }
 
-        return { ...validationResult.value, attachments: (record as any).attachments || [] } as ComposedEmail & { attachments: any[] };
+        return {
+          ...validationResult.value,
+        } as ComposedEmail;
       })
-      .filter((value: ComposedEmail | null) => !!value) as (ComposedEmail & { attachments: any[] })[];
+      .filter((value: ComposedEmail | null) => !!value);
 
     return storedEmails;
   } catch (error) {
@@ -62,46 +77,32 @@ export async function getAllEmails(includeAttachments = false): Promise<Composed
   }
 }
 
-export async function getEmailById(
-  id: string,
-  includeAttachments = false,
-): Promise<ComposedEmail | null> {
+export async function getEmailById(id: string): Promise<ComposedEmail | null> {
   try {
-    const record = await prisma.composedEmail.findUnique({
-      where: { id },
-      include: includeAttachments ? { attachments: true } : undefined,
-    });
-
+    const result: any = await db.orm.public.ComposedEmails.where({ id }).all();
+    const record = Array.isArray(result) ? result[0] : result;
     if (!record) {
       return null;
     }
 
-    const validationResult = validateComposedEmail(record);
+    const normalized = normalizeRecord(record);
+    const validationResult = validateComposedEmail(normalized);
 
     if (!validationResult.success) {
       console.error(validationResult.error);
       return null;
     }
 
-    return { ...validationResult.value, attachments: (record as any).attachments || [] } as ComposedEmail & { attachments: any[] };
+    return validationResult.value;
   } catch (error) {
     console.error(`Error reading email ${id}:`, error);
     return null;
   }
 }
 
-export async function deleteEmailById(
-  id: string,
-  s3Service?: S3Service,
-): Promise<void> {
+export async function deleteEmailById(id: string): Promise<void> {
   try {
-    if (s3Service) {
-      await s3Service.deleteAttachmentsByEmailId(id);
-    }
-
-    await prisma.composedEmail.delete({
-      where: { id },
-    });
+    await db.orm.public.ComposedEmails.where({ id }).delete();
   } catch (error) {
     console.error(`Error deleting email ${id}:`, error);
     throw new Error("Failed to delete email");
@@ -130,11 +131,7 @@ export async function sendEmail({
       from,
       to: toAddresses,
       subject,
-      text:
-        text ||
-        (html
-          ? "Please view this email in an HTML compatible email client"
-          : ""),
+      text: text || (html ? "Please view this email in an HTML compatible email client" : ""),
       html,
     });
 
@@ -184,58 +181,34 @@ export async function constructAndSaveEmail({
   }
 }
 
-export async function saveEmail(
-  email: NewComposedEmail,
-  attachments?: { contentId: string | null; s3Key: string; filename: string; contentType: string; size: number }[],
-): Promise<ComposedEmail> {
+export async function saveEmail(email: NewComposedEmail): Promise<ComposedEmail> {
   if (email.html) {
     const window = new JSDOM("").window;
     const purify = DOMPurify(window);
     email.html = purify.sanitize(email.html);
   }
 
-  const record = await prisma.composedEmail.create({
-    data: {
-      from: email.from,
-      to: email.to,
-      subject: email.subject,
-      html: email.html,
-      text: email.text,
-      date: email.date,
-      attachments: attachments
-        ? {
-            create: attachments.map((att) => ({
-              filename: att.filename,
-              contentType: att.contentType,
-              size: att.size,
-              s3Key: att.s3Key,
-              contentId: att.contentId,
-            })),
-          }
-        : undefined,
-    },
-    include: attachments ? { attachments: true } : undefined,
+  const record = await db.orm.public.ComposedEmails.create({
+    from: email.from,
+    to: email.to,
+    subject: email.subject,
+    html: email.html,
+    text: email.text,
+    date: email.date
+      ? typeof (globalThis as any).Temporal !== "undefined"
+        ? (globalThis as any).Temporal.Instant.from(email.date.toISOString())
+        : email.date
+      : null,
   });
 
-  const validationResult = validateComposedEmail(record);
+  const normalized = normalizeRecord(record);
+  const validationResult = validateComposedEmail(normalized);
 
   if (!validationResult.success) {
     return Promise.reject(new Error(validationResult.error));
   }
 
-  return { ...validationResult.value, attachments: (record as any).attachments || [] } as ComposedEmail & { attachments: any[] };
-}
-
-export function createS3ServiceFromEnv() {
-  const deps = createS3Dependencies({
-    endpoint: ENV_CONFIG.s3.endpoint,
-    bucket: ENV_CONFIG.s3.bucket,
-    credentials: {
-      accessKeyId: ENV_CONFIG.s3.accessKey,
-      secretAccessKey: ENV_CONFIG.s3.secretKey,
-    },
-    region: ENV_CONFIG.s3.region,
-    forcePathStyle: true,
-  });
-  return createS3Service(deps);
+  return {
+    ...validationResult.value,
+  };
 }

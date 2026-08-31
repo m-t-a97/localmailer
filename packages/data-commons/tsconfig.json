@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
+    "module": "esnext",
     "target": "ESNext",
+    "types": ["vitest/globals"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -9,15 +11,11 @@
     "emitDecoratorMetadata": true,
     "noEmit": true,
     "esModuleInterop": true,
-    "types": ["vitest/globals"],
-    "module": "esnext",
-    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "incremental": true,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   }
 }

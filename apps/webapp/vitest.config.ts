@@ -7,6 +7,7 @@ export default defineConfig({
     passWithNoTests: true,
     environment: "jsdom",
     dir: "./src",
+    setupFiles: ["temporal-polyfill/global"],
     reporters: ["verbose"],
     coverage: {
       provider: "v8",

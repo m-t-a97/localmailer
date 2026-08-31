@@ -17,12 +17,10 @@ import { toggleSmtpServer } from "@/services/client/smtp.service";
 
 export function Inbox() {
   const [emails, setEmails] = useState<ComposedEmail[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedEmail, setSelectedEmail] = useState<ComposedEmail | null>(
-    null,
-  );
-  const [serverStarted, setServerStarted] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [selectedEmail, setSelectedEmail] = useState<ComposedEmail | null>(null);
+  const [serverStarted, setServerStarted] = useState<boolean>(false);
 
   const fetchEmails = async (): Promise<void> => {
     try {
@@ -40,9 +38,7 @@ export function Inbox() {
     try {
       setIsLoading(true);
       await deleteEmailById(emailId);
-      setEmails((prevEmails) =>
-        prevEmails.filter((email) => email.id !== emailId),
-      );
+      setEmails((prevEmails) => prevEmails.filter((email) => email.id !== emailId));
       if (selectedEmail?.id === emailId) {
         setSelectedEmail(null);
       }
@@ -83,19 +79,13 @@ export function Inbox() {
               <CardTitle>
                 <h2 className="text-lg font-semibold">Inbox</h2>
               </CardTitle>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={fetchEmails}
-              >
+              <Button variant="ghost" size="icon" onClick={fetchEmails}>
                 <RefreshCw className="h-4 w-4" />
               </Button>
             </div>
 
             <div className="mt-4 mb-4">
-              <p className="text-sm text-muted-foreground mb-2">
-                Your development email inbox
-              </p>
+              <p className="text-sm text-muted-foreground mb-2">Your development email inbox</p>
               <div className="relative">
                 <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
                 <Input
@@ -111,7 +101,10 @@ export function Inbox() {
             {isLoading ? (
               <div className="space-y-3">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex items-start space-x-4 rounded-lg border border-border/50 p-3">
+                  <div
+                    key={i}
+                    className="flex items-start space-x-4 rounded-lg border border-border/50 p-3"
+                  >
                     <Skeleton className="h-10 w-10 rounded-full shrink-0" />
                     <div className="space-y-2 flex-1">
                       <Skeleton className="h-4 w-[80%]" />
@@ -137,12 +130,8 @@ export function Inbox() {
                       <Mail className="text-primary h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0 space-y-1">
-                      <p className="truncate text-sm font-medium leading-none">
-                        {email.subject}
-                      </p>
-                      <p className="text-muted-foreground truncate text-xs">
-                        {email.from}
-                      </p>
+                      <p className="truncate text-sm font-medium leading-none">{email.subject}</p>
+                      <p className="text-muted-foreground truncate text-xs">{email.from}</p>
                       <p className="text-muted-foreground/60 text-xs">
                         {DateUtils.format(new Date(email.createdAt))}
                       </p>
@@ -171,21 +160,16 @@ export function Inbox() {
                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
                   <Mail className="h-6 w-6 text-muted-foreground" />
                 </div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  No emails found
-                </p>
+                <p className="text-sm font-medium text-muted-foreground">No emails found</p>
                 <p className="text-xs text-muted-foreground/60 mt-1">
-                  {searchTerm
-                    ? "Try a different search term"
-                    : "Send an email to see it here"}
+                  {searchTerm ? "Try a different search term" : "Send an email to see it here"}
                 </p>
               </div>
             )}
 
             <CardFooter className="justify-end px-0 pb-0 pt-4">
               <p className="text-xs text-muted-foreground/70">
-                SMTP server {serverStarted ? "running" : "not running"} on port
-                2525
+                SMTP server {serverStarted ? "running" : "not running"} on port 2525
               </p>
             </CardFooter>
           </CardContent>
@@ -201,9 +185,7 @@ export function Inbox() {
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
                 <Mail className="h-7 w-7 text-muted-foreground" />
               </div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Select an email to view
-              </p>
+              <p className="text-sm font-medium text-muted-foreground">Select an email to view</p>
               <p className="text-xs text-muted-foreground/60 mt-1">
                 Click on an email from the inbox to view its contents
               </p>
