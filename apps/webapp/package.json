@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "prebuild": "pnpm run prisma:contract:emit",
     "build": "next build",
     "start": "next start",
     "lint": "oxlint && eslint",
