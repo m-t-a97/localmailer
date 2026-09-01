@@ -6,6 +6,9 @@
   },
   "workspaceFolder": "/workspaces/localmailer",
   "forwardPorts": [2525, 3000, 3001],
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:4": {} 
+  },
   "customizations": {
     "vscode": {
       "settings": {
