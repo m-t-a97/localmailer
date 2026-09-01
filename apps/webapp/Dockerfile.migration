@@ -1,4 +1,10 @@
 # ---------------------------------
+# Migration image
+#
+# One-shot image whose only job is to run DB migrations before the webapp starts.
+# ---------------------------------
+
+# ---------------------------------
 # BASE STAGE
 # ---------------------------------
 FROM node:lts-alpine AS base
@@ -13,8 +19,6 @@ RUN npm i -g pnpm@11.24.0
 # ---------------------------------
 FROM base AS pruner
 
-RUN apk update
-
 WORKDIR /app
 
 COPY . ./
@@ -23,11 +27,13 @@ RUN pnpm dlx turbo prune webapp --docker
 # ---------------------------------
 
 # ---------------------------------
-# BUILD STAGE
+# INSTALL STAGE
+#
+# A full (dev included) install is required: the `prisma` CLI and
+# `@prisma/cli-engine` are devDependencies of the webapp package, so
+# `--prod` would strip exactly what this image exists to run.
 # ---------------------------------
-FROM base AS builder
-
-RUN apk update
+FROM base AS installer
 
 WORKDIR /app
 
@@ -37,31 +43,45 @@ COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/pnpm-lock.yaml ./
 RUN pnpm i --frozen-lockfile
 
+# Then the sources: prisma.config.ts, src/prisma/* and migrations/*
 COPY --from=pruner /app/out/full/ .
 
 WORKDIR /app/apps/webapp
-RUN pnpm run prisma:contract:emit
-WORKDIR /app
 
-RUN pnpm dlx turbo run build --filter=webapp...
+# Keep contract.json / contract.d.ts in sync with contract.prisma.
+# This is offline codegen, it never touches the database.
+RUN pnpm run prisma:contract:emit
 # ---------------------------------
 
 # ---------------------------------
 # RUNNER STAGE
 # ---------------------------------
-FROM builder AS runner
+FROM base AS runner
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV DO_NOT_TRACK=1
 
-COPY --from=builder /app/apps/webapp/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/apps/webapp/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/webapp/.next/static ./.next/static
+WORKDIR /app
 
+# Copy the installed workspace as-is so pnpm's relative symlinks
+# (node_modules/.pnpm/...) keep resolving at the same path.
+COPY --from=installer --chown=node:node /app ./
+
+# `node` (uid 1000) ships with the node:alpine image
+USER node
+
+# prisma.config.ts lives here and is resolved relative to the cwd
 WORKDIR /app/apps/webapp
+
+# Make the workspace-local prisma CLI callable by name
+ENV PATH="/app/apps/webapp/node_modules/.bin:/app/node_modules/.bin:${PATH}"
 
 ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL}
 
-CMD ["pnpm", "dlx", "prisma db update"]
+# There is no TTY in a compose job, so the CLI must not try to prompt.
+# Destructive operations then abort unless the operator opts in explicitly by
+# setting PRISMA_CONFIRM_DB to the database name (`prisma db update --confirm`).
+CMD ["sh", "-c", "prisma db update --no-interactive ${PRISMA_CONFIRM_DB:+--confirm \"$PRISMA_CONFIRM_DB\"}"]
 # ---------------------------------
